@@ -78,7 +78,7 @@ class cart_pole_system():
         return 0.5 * self.CART_MASS * (x_dot[:, :2, 0]**2).sum(axis=1) + 0.5 * self.POLE_MASS * (x_dot[:, 2:, 0]**2).sum(axis=1)
 
     def cartesian_to_potential(self, x, x_dot):
-        return -x[:, 4, :] * self.POLE_MASS * self.GRAVITY
+        return -x[:, 4, 0] * self.POLE_MASS * self.GRAVITY
 
     def x0(self):
         return self.q_to_cartesian(
@@ -132,14 +132,18 @@ while True:
     T = system.cartesian_to_kinetic(x, x_dot)
     U = system.cartesian_to_potential(x, x_dot)
     L = T - U
+    E = T + U
     A = L.sum()
 
     A.backward()
     q = q - 0.00001 * q.grad
     q = q.detach()
     
-    if i % 1000 == 1:
+    if i % 10000 == 1:
         x_out = torch.cat([x0, x, xf]).detach().numpy()
         system.render(x_out)
         plt.savefig('out-%010d.png' % i)
         plt.close()
+        plt.clf()
+        plt.plot(E.detach().numpy())
+        plt.savefig('energy-%010d.png' % i)
